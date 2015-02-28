@@ -2,14 +2,14 @@
 """
     configuration
 
-    :copyright: © 2014 by Openlabs Technologies & Consulting (P) Limited
+    :copyright: © 2014-2015 by Openlabs Technologies & Consulting (P) Limited
     :license: BSD, see LICENSE for more details.
 """
 import json
 import logging
 
 from trytond.model import ModelView, ModelSQL, ModelSingleton, fields
-from trytond.config import CONFIG
+from trytond.config import config
 from trytond.transaction import Transaction
 from pyes import ES
 from pyes.managers import Indices
@@ -65,7 +65,7 @@ class Configuration(ModelSingleton, ModelSQL, ModelView):
         """
         Find the server from config and return
         """
-        return CONFIG.get('elastic_search_server', 'localhost:9200')
+        return config.get('elastic_search', 'server', 'localhost:9200')
 
     def get_server(self, name):
         """
@@ -188,35 +188,37 @@ class Configuration(ModelSingleton, ModelSQL, ModelView):
         """
         Update the settings on Elastic Search.
         """
-        config, = records
+        configuration, = records
 
-        conn = config.get_es_connection()
+        conn = configuration.get_es_connection()
         indices = Indices(conn)
         logger = cls.get_logger()
 
-        if indices.exists_index(config.index_name):
+        if indices.exists_index(configuration.index_name):
             # Updating an existing index requires closing it and updating
             # it, then reopening the index
             #
             # See: http://www.elasticsearch.org/guide/en/elasticsearch/
             # reference/current
             # /indices-update-settings.html#update-settings-analysis
-            logger.info('Index %s already exists' % config.index_name)
+            logger.info('Index %s already exists' % configuration.index_name)
 
-            logger.info('Closing Index %s' % config.index_name)
-            indices.close_index(config.index_name)
+            logger.info('Closing Index %s' % configuration.index_name)
+            indices.close_index(configuration.index_name)
 
-            logger.info('Updating existing Index %s' % config.index_name)
-            indices.update_settings(config.index_name, config.settings)
+            logger.info('Updating existing Index %s' % configuration.index_name)
+            indices.update_settings(configuration.index_name, config.settings)
 
-            logger.info('Opening Index %s' % config.index_name)
-            indices.open_index(config.index_name)
+            logger.info('Opening Index %s' % configuration.index_name)
+            indices.open_index(configuration.index_name)
         else:
             # Create a brand new index
             logger.info(
-                'Creating new index %s with settings' % config.index_name
+                'Creating new index %s with settings' % configuration.index_name
             )
-            indices.create_index(config.index_name, config.settings)
+            indices.create_index(
+                configuration.index_name, configuration.settings
+            )
 
         cls.write([records], {'settings_updated': True})
 
