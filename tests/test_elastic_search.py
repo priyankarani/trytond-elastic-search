@@ -17,7 +17,6 @@ from trytond.tests.test_tryton import POOL, DB_NAME, USER, CONTEXT, test_view,\
 from trytond.transaction import Transaction
 from trytond.config import config
 
-config.add_section('elastic_search')
 config.set('elastic_search', 'server_uri', 'http://localhost:9200')
 
 

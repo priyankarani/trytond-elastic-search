@@ -31,6 +31,11 @@ class SQLiteTest(Command):
         if self.distribution.tests_require:
             self.distribution.fetch_build_eggs(self.distribution.tests_require)
 
+        from trytond.config import config
+
+        # Add section for elastic search
+        config.add_section('elastic_search')
+
         os.environ['TRYTOND_DATABASE_URI'] = 'sqlite://'
         os.environ['DB_NAME'] = ':memory:'
 
